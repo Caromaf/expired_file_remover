@@ -4,7 +4,7 @@
 
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict, Tuple
 import re
 
 
@@ -126,6 +126,55 @@ def remove_expired_files(
     return deleted_count
 
 
+def _build_pattern_and_mapping(date_format: str) -> Tuple[str, Dict[str, str]]:
+    """
+    日付フォーマット文字列から正規表現パターンと、フォーマット指定子と
+    グループ名のマッピングを生成します
+
+    Args:
+        date_format: 日付フォーマット（例: '%Y%m%d', '%Y-%m-%d'）
+
+    Returns:
+        Tuple[str, Dict[str, str]]: 
+            - 正規表現パターン
+            - フォーマット指定子とグループ名のマッピング
+    """
+    # フォーマット指定子とそれに対応する正規表現パターン
+    format_specs = {
+        '%Y': (r'\d{4}', 'year4'),     # 4桁年
+        '%y': (r'\d{2}', 'year2'),     # 2桁年
+        '%m': (r'\d{2}', 'month'),     # 月
+        '%d': (r'\d{2}', 'day'),       # 日
+        '%H': (r'\d{2}', 'hour24'),    # 時（24時間）
+        '%I': (r'\d{2}', 'hour12'),    # 時（12時間）
+        '%M': (r'\d{2}', 'minute'),    # 分
+        '%S': (r'\d{2}', 'second'),    # 秒
+    }
+
+    pattern_parts = []
+    current_pos = 0
+    mapping = {}
+
+    while current_pos < len(date_format):
+        found_spec = False
+        # より長い指定子から先にマッチを試みる
+        for spec, (regex, group_name) in sorted(format_specs.items(), key=lambda x: len(x[0]), reverse=True):
+            if date_format.startswith(spec, current_pos):
+                # フォーマット指定子を発見
+                pattern_parts.append(f'(?P<{group_name}>{regex})')
+                mapping[spec] = group_name
+                current_pos += len(spec)
+                found_spec = True
+                break
+        
+        if not found_spec:
+            # フォーマット指定子以外の文字はエスケープして追加
+            pattern_parts.append(re.escape(date_format[current_pos]))
+            current_pos += 1
+
+    return ''.join(pattern_parts), mapping
+
+
 def extract_date_from_filename(file_path: Union[str, Path], date_format: str) -> Optional[datetime]:
     """
     ファイル名から日付を抽出します
@@ -138,54 +187,40 @@ def extract_date_from_filename(file_path: Union[str, Path], date_format: str) ->
         Optional[datetime]: 抽出された日付。抽出できない場合はNone
 
     Raises:
-        ValueError: date_formatが無効な場合
+        ValueError: 無効なフォーマット指定子が含まれている場合
     """
-    # 日付フォーマット文字列から正規表現パターンを構築
-    format_to_pattern = {
-        '%Y': r'(\d{4})',      # 年（4桁）
-        '%y': r'(\d{2})',      # 年（2桁）
-        '%m': r'(\d{2})',      # 月（2桁）
-        '%d': r'(\d{2})',      # 日（2桁）
-        '%H': r'(\d{2})',      # 時（24時間制）
-        '%I': r'(\d{2})',      # 時（12時間制）
-        '%M': r'(\d{2})',      # 分
-        '%S': r'(\d{2})',      # 秒
-    }
-
     try:
-        # フォーマット文字列の検証
-        format_str = date_format
-        for fmt in sorted(format_to_pattern.keys(), key=len, reverse=True):
-            format_str = format_str.replace(fmt, '')
-
-        # 残りの文字が特殊文字かどうかをチェック
-        allowed_chars = set('.-_/: [](){},')
-        for char in format_str:
-            if not (char in allowed_chars or char.isspace()):
-                raise ValueError(f"無効なフォーマット指定子または文字が含まれています: {char}")
-
         path = Path(file_path) if isinstance(file_path, str) else file_path
         filename = path.stem
 
-        # 正規表現パターンを構築
-        pattern = re.escape(date_format)
-        for fmt in sorted(format_to_pattern.keys(), key=len, reverse=True):
-            pattern = pattern.replace(re.escape(fmt), format_to_pattern[fmt])
+        # パターンとマッピングを構築
+        pattern, mapping = _build_pattern_and_mapping(date_format)
+        if not mapping:
+            raise ValueError(f"有効な日付フォーマット指定子が含まれていません: {date_format}")
 
         # ファイル名から日付部分を検索
         match = re.search(pattern, filename)
         if not match:
             return None
 
-        # マッチした部分をそのままdatetimeに変換
-        matched_str = match.group(0)
+        # マッチした部分から日付文字列を再構成
+        date_str = date_format
+        for fmt, group_name in mapping.items():
+            if group_name in match.groupdict():
+                date_str = date_str.replace(fmt, match.group(group_name))
+
+        # 日付文字列をdatetimeオブジェクトに変換
         try:
-            return datetime.strptime(matched_str, date_format)
-        except ValueError:
+            dt = datetime.strptime(date_str, date_format)
+            # 日付の妥当性を追加チェック（strptimeは2月31日などを3月3日として受け入れてしまう）
+            if dt.month != int(match.group('month')) or dt.day != int(match.group('day')):
+                return None
+            return dt
+        except (ValueError, KeyError):
             return None
 
     except ValueError as e:
-        if "無効なフォーマット" in str(e):
+        if "有効な日付フォーマット指定子" in str(e):
             raise
         return None
     except Exception:
