@@ -4,7 +4,6 @@
 
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import patch, Mock
 
 import pytest
 
@@ -172,40 +171,47 @@ class TestRemoveExpiredFilesByFilenameDate:
 
     def test_remove_from_empty_dir(self, tmp_path):
         """空のディレクトリでのテスト"""
-        deleted = remove_expired_files_by_filename_date(tmp_path, "%Y%m%d", datetime(2025, 1, 1))
+        deleted = remove_expired_files_by_filename_date(
+            tmp_path, "%Y%m%d", datetime(2025, 1, 1)
+        )
         assert deleted == 0
 
     def test_remove_from_non_existent_dir(self, tmp_path):
         """存在しないディレクトリでのテスト"""
         non_existent_path = tmp_path / "non_existent"
         with pytest.raises(FileNotFoundError):
-            remove_expired_files_by_filename_date(non_existent_path, "%Y%m%d", datetime(2025, 1, 1))
+            remove_expired_files_by_filename_date(
+                non_existent_path, "%Y%m%d", datetime(2025, 1, 1)
+            )
 
     def test_path_is_not_a_directory(self, tmp_path):
         """指定パスがディレクトリではない場合のテスト"""
         file_path = tmp_path / "a_file.txt"
         file_path.touch()
         with pytest.raises(NotADirectoryError):
-            remove_expired_files_by_filename_date(file_path, "%Y%m%d", datetime(2025, 1, 1))
+            remove_expired_files_by_filename_date(
+                file_path, "%Y%m%d", datetime(2025, 1, 1)
+            )
 
     def test_remove_by_filename_date_with_multiple_filters(self, tmp_path):
         """複数の日付フォーマットを同時に指定するテスト"""
         test_files = [
             "data_20230101_001.txt",  # YYYYMMDD形式
-            "log-2023-01-01.txt",     # YYYY-MM-DD形式
+            "log-2023-01-01.txt",  # YYYY-MM-DD形式
             "backup_01-01-2023.txt",  # MM-DD-YYYY形式
-            "current.txt"             # 日付なし
+            "current.txt",  # 日付なし
         ]
         for file_name in test_files:
             (tmp_path / file_name).touch()
 
         patterns = ["%Y%m%d", "%Y-%m-%d", "%m-%d-%Y"]
-        deleted = remove_expired_files_by_filename_date(tmp_path, patterns, datetime(2025, 1, 1))
+        deleted = remove_expired_files_by_filename_date(
+            tmp_path, patterns, datetime(2025, 1, 1)
+        )
         assert deleted == 3  # 日付を含む3つのファイルが削除されるべき
 
     def test_remove_files_with_permission_error(self, tmp_path):
         """パーミッションエラーが発生する場合のテスト"""
-        import os
 
         # テスト用ファイルを作成
         test_file = tmp_path / "data_20230101.txt"
@@ -217,7 +223,9 @@ class TestRemoveExpiredFilesByFilenameDate:
 
         try:
             with pytest.raises(PermissionError):
-                remove_expired_files_by_filename_date(tmp_path, "%Y%m%d", datetime(2025, 1, 1))
+                remove_expired_files_by_filename_date(
+                    tmp_path, "%Y%m%d", datetime(2025, 1, 1)
+                )
         finally:
             # テストファイルが存在する場合は権限を戻してから削除
             if test_file.exists():
@@ -227,16 +235,18 @@ class TestRemoveExpiredFilesByFilenameDate:
     def test_remove_files_with_different_date_formats(self, tmp_path):
         """異なる日付フォーマットが混在する場合のテスト"""
         test_files = [
-            "log_20230101.txt",        # YYYYMMDD
-            "data-2023-01-01.txt",     # YYYY-MM-DD
-            "invalid_date.txt"         # 日付なし
+            "log_20230101.txt",  # YYYYMMDD
+            "data-2023-01-01.txt",  # YYYY-MM-DD
+            "invalid_date.txt",  # 日付なし
         ]
         for file_name in test_files:
             (tmp_path / file_name).touch()
 
         # 期限切れの基準日を設定
         reference_date = datetime(2025, 1, 1)
-        
+
         # YYYYMMDD形式のみを指定してテスト
-        deleted = remove_expired_files_by_filename_date(tmp_path, "%Y%m%d", reference_date)
+        deleted = remove_expired_files_by_filename_date(
+            tmp_path, "%Y%m%d", reference_date
+        )
         assert deleted == 1  # YYYYMMDD形式のファイルのみが削除されるべき

@@ -2,8 +2,8 @@
 エクスパイア（有効期限切れ）したファイルを削除するモジュール
 """
 
-import re
 import os
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
@@ -337,7 +337,9 @@ def remove_expired_files_by_filename_date(
                         deleted_count += 1
                         break
                     except PermissionError as e:
-                        raise PermissionError(f"ファイル {item} の削除権限がありません: {e}")
+                        raise PermissionError(
+                            f"ファイル {item} の削除権限がありません: {e}"
+                        )
                     except OSError as e:
                         print(f"ファイル {item} の削除に失敗しました: {e}")
                         break
