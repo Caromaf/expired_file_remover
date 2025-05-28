@@ -7,6 +7,27 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Filesystems",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+]
+keywords = ["file", "cleanup", "expired", "maintenance", "utility"]
+
+[project.urls]
+"Homepage" = "https://github.com/your-organization/expired-file-remover"
+"Bug Tracker" = "https://github.com/your-organization/expired-file-remover/issues"
+"Documentation" = "https://your-organization.github.io/expired-file-remover"
 
 [tool.poetry]
 packages = [{include = "expired_file_remover", from = "src"}]

@@ -82,14 +82,26 @@ GitHub Actions ワークフローがタグをトリガーとして PyPI にパ�
 
 ```
 expired-file-remover/
+├── .devcontainer/         # Dev Container の設定
 ├── .github/               # GitHub Actions ワークフロー
+├── docs/                  # Docusaurusによるドキュメント
+├── examples/              # 使用例
+│   └── cleanup_old_files.py # コマンドライン実行用スクリプト
 ├── src/
 │   └── expired_file_remover/  # メインパッケージ
 │       ├── __init__.py    # パッケージエクスポート
-│       └── core.py        # コア機能
+│       ├── core.py        # コア機能
+│       └── py.typed       # 型ヒント対応を示すマーカー
 ├── tests/                 # テストケース
+│   ├── conftest.py        # テスト設定
 │   └── test_basic.py      # 基本機能のテスト
+├── .editorconfig          # エディタ設定
+├── CHANGELOG.md           # 変更履歴
+├── DEVELOPMENT.md         # 開発者向けドキュメント（このファイル）
+├── MANIFEST.in            # パッケージ配布物の設定
+├── Makefile               # 開発タスクランナー
 ├── pyproject.toml         # パッケージメタデータと設定
+├── setup.cfg              # 追加の設定（mypy等）
 ├── LICENSE                # ライセンスファイル
 └── README.md              # ユーザー向けドキュメント
 ```

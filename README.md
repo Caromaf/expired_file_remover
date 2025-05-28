@@ -1,5 +1,11 @@
 # expired-file-remover
 
+[![Python CI](https://github.com/your-organization/expired-file-remover/actions/workflows/ci.yml/badge.svg)](https://github.com/your-organization/expired-file-remover/actions/workflows/ci.yml)
+[![PyPI version](https://badge.fury.io/py/expired-file-remover.svg)](https://badge.fury.io/py/expired-file-remover)
+[![Python Versions](https://img.shields.io/pypi/pyversions/expired-file-remover.svg)](https://pypi.org/project/expired-file-remover/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 特定のディレクトリ内で作成・更新から一定期間を経過したファイルを削除するためのPythonパッケージです。
 
 ## 特徴
@@ -43,6 +49,22 @@ count = remove_expired_files("/path/to/directory", 10, recursive=True)
 # 特定の拡張子のファイルのみ削除
 count = remove_expired_files("/path/to/directory", 10, file_filter=[".log", ".tmp"])
 ```
+
+### コマンドラインツールとして使用
+
+パッケージには、コマンドラインから実行できるサンプルスクリプトが含まれています。
+
+```bash
+# examplesディレクトリのスクリプトを直接使用する場合
+python -m examples.cleanup_old_files /path/to/directory --days 30 --recursive --extensions .log .tmp
+
+# または、スクリプトをコピーしてカスタマイズすることも可能です
+```
+
+オプション:
+- `--days`: この日数より古いファイルを削除（デフォルト: 30）
+- `--recursive`: サブディレクトリも対象にする
+- `--extensions`: 対象とするファイル拡張子（例: .txt .log）
 
 ### 単一ファイルの処理
 

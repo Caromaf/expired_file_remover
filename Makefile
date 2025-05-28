@@ -48,9 +48,31 @@ lint:
 .PHONY: docs
 docs:
 	@if [ ! -d "$(DOCS_DIR)/node_modules" ]; then \
+		echo "Installing Docusaurus dependencies..." && \
 		cd $(DOCS_DIR) && npm install; \
 	fi
+	@echo "Building documentation..."
 	cd $(DOCS_DIR) && npm run build
+	@echo "Documentation built successfully in $(DOCS_DIR)/build/"
+
+.PHONY: docs-dev
+docs-dev:
+	@if [ ! -d "$(DOCS_DIR)/node_modules" ]; then \
+		echo "Installing Docusaurus dependencies..." && \
+		cd $(DOCS_DIR) && npm install; \
+	fi
+	@echo "Starting documentation development server..."
+	@echo "Access the documentation at http://localhost:3000"
+	cd $(DOCS_DIR) && npm run start
+
+.PHONY: docs-serve
+docs-serve:
+	@if [ ! -d "$(DOCS_DIR)/build" ]; then \
+		echo "Documentation not built. Building..." && \
+		make docs; \
+	fi
+	@echo "Serving documentation at http://localhost:3000"
+	cd $(DOCS_DIR) && npm run serve
 
 .PHONY: clean
 clean:

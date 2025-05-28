@@ -45,7 +45,13 @@ jobs:
     
     - name: Test with pytest
       run: |
-        poetry run pytest --cov=src/expired_file_remover
+        poetry run pytest --cov=src/expired_file_remover --cov-report=xml
+        
+    - name: Upload coverage report
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
 
   docs:
     runs-on: ubuntu-latest
@@ -55,17 +61,41 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: 18
+        cache: 'npm'
+        cache-dependency-path: docs/package-lock.json
     
-    - name: Setup Docusaurus
+    - name: Check if docs/package.json exists
+      id: check_docs
       run: |
-        mkdir -p website
-        cd website
+        if [ -f "docs/package.json" ]; then
+          echo "::set-output name=exists::true"
+        else
+          echo "::set-output name=exists::false"
+        fi
+
+    - name: Setup Docusaurus if needed
+      if: steps.check_docs.outputs.exists != 'true'
+      run: |
+        mkdir -p docs
+        cd docs
         npx create-docusaurus@latest . classic --typescript
+        
+        # 設定ファイルを更新
+        sed -i 's/my-website/expired-file-remover-docs/g' docusaurus.config.js
+        sed -i 's/My Site/expired-file-remover/g' docusaurus.config.js
         
         # 既存のドキュメントをコピー
         mkdir -p docs/guides
-        cp ../docs/*.md docs/guides/
+        cp ../docs/*.md docs/guides/ || echo "No docs to copy"
     
     - name: Build documentation
       run: |
-        cd website && npm install && npm run build
+        cd docs
+        npm ci || npm install
+        npm run build
+    
+    - name: Upload documentation artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: documentation
+        path: docs/build/
