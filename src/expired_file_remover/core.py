@@ -1,6 +1,7 @@
 """
 エクスパイア（有効期限切れ）したファイルを削除するモジュール
 """
+
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional, Union
@@ -39,7 +40,9 @@ def is_expired(file_path: Path, deadline: Union[datetime, timedelta, int]) -> bo
         )
 
 
-def remove_expired_file(file_path: Union[str, Path], deadline: Union[datetime, timedelta, int]) -> bool:
+def remove_expired_file(
+    file_path: Union[str, Path], deadline: Union[datetime, timedelta, int]
+) -> bool:
     """
     指定された期限より古いファイルを削除します
 
