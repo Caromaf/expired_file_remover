@@ -27,7 +27,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          poetry install --no-interaction --with dev
+          poetry install
 
       - name: Format check with isort
         run: |
