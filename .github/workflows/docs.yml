@@ -1,0 +1,94 @@
+name: Deploy Docusaurus
+
+on:
+  # リリースタグが作成された時
+  release:
+    types: [published]
+  # mainブランチにプッシュされた時
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+  # 手動実行
+  workflow_dispatch:
+
+# GitHub Pagesへの書き込み権限を設定
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同時に1つのデプロイだけを許可
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # ビルドジョブ
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+      
+      - name: Check if docs/package.json exists
+        id: check_docs
+        run: |
+          if [ -f "docs/package.json" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Docusaurus if needed
+        if: steps.check_docs.outputs.exists != 'true'
+        run: |
+          mkdir -p docs
+          cd docs
+          npx create-docusaurus@latest . classic --typescript
+          
+          # 設定ファイルを更新
+          sed -i 's/my-website/expired-file-remover-docs/g' docusaurus.config.js
+          sed -i 's/My Site/expired-file-remover/g' docusaurus.config.js
+          
+          # 既存のドキュメントをコピー
+          mkdir -p docs/guides
+          cp ../docs/*.md docs/guides/ || echo "No docs to copy"
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+      
+      - name: Install dependencies
+        run: |
+          cd docs
+          npm ci || npm install
+      
+      - name: Build with Docusaurus
+        run: |
+          cd docs
+          npm run build
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: docs/build
+
+  # デプロイジョブ
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2

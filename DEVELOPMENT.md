@@ -28,6 +28,56 @@ curl -sSL https://install.python-poetry.org | python3 -
 poetry install
 ```
 
+## ドキュメント
+
+このプロジェクトでは、ドキュメントの生成に [Docusaurus](https://docusaurus.io/) を使用しています。
+
+### ローカルでのドキュメント開発
+
+ドキュメントはプロジェクトの `docs/` ディレクトリに配置されています。
+
+```bash
+# Docusaurus の依存関係をインストール
+cd docs
+npm install
+
+# 開発サーバーを起動（変更をリアルタイムでプレビュー）
+npm start
+
+# ドキュメントをビルド
+npm run build
+```
+
+開発サーバー実行中は、`http://localhost:3000` でドキュメントをプレビューできます。
+
+### ドキュメントの構造
+
+- `docs/docs/` - Markdown形式のドキュメントファイル
+  - `intro.md` - 導入ページ
+  - `guides/` - 使い方ガイド
+
+### ドキュメントのデプロイ
+
+ドキュメントは GitHub Pages にデプロイされます。デプロイは以下のタイミングで自動的に実行されます：
+
+1. main ブランチへのプッシュ（`docs/` ディレクトリ内の変更がある場合）
+2. リリースタグの作成時
+3. GitHub Actions の手動実行
+
+デプロイ後、以下のURLでドキュメントが公開されます：
+`https://your-organization.github.io/expired-file-remover/`
+
+### 手動デプロイ
+
+```bash
+# ドキュメントをビルド
+cd docs
+npm run build
+
+# GitHub Pages へのデプロイ（GH_TOKEN環境変数が必要）
+npm run deploy
+```
+
 ## 開発ワークフロー
 
 ### テストの実行
