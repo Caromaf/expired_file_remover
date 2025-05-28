@@ -2,10 +2,10 @@
 エクスパイア（有効期限切れ）したファイルを削除するモジュール
 """
 
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional, Union
-import re
 
 
 def is_expired(file_path: Path, deadline: Union[datetime, timedelta, int]) -> bool:
@@ -139,61 +139,59 @@ def extract_date_from_filename(file_path: Path, date_format: str) -> Optional[da
     """
     try:
         filename = file_path.stem
-        
+
         # 日付フォーマット文字列から正規表現パターンを構築
         format_to_pattern = {
-            '%Y': r'(?P<Y>\d{4})',      # 年（4桁）
-            '%y': r'(?P<y>\d{2})',      # 年（2桁）
-            '%m': r'(?P<m>\d{2})',      # 月（2桁）
-            '%d': r'(?P<d>\d{2})',      # 日（2桁）
-            '%H': r'(?P<H>\d{2})',      # 時（24時間制）
-            '%I': r'(?P<I>\d{2})',      # 時（12時間制）
-            '%M': r'(?P<M>\d{2})',      # 分
-            '%S': r'(?P<S>\d{2})',      # 秒
+            "%Y": r"(?P<Y>\d{4})",  # 年（4桁）
+            "%y": r"(?P<y>\d{2})",  # 年（2桁）
+            "%m": r"(?P<m>\d{2})",  # 月（2桁）
+            "%d": r"(?P<d>\d{2})",  # 日（2桁）
+            "%H": r"(?P<H>\d{2})",  # 時（24時間制）
+            "%I": r"(?P<I>\d{2})",  # 時（12時間制）
+            "%M": r"(?P<M>\d{2})",  # 分
+            "%S": r"(?P<S>\d{2})",  # 秒
         }
-        
+
         # エスケープが必要な文字
-        special_chars = '.^$*+?{}[]|()'
-        
+        special_chars = ".^$*+?{}[]|()"
+
         # 正規表現パターンを構築
         pattern = date_format
         for fmt, regex in format_to_pattern.items():
             pattern = pattern.replace(fmt, regex)
-        
+
         # 日付フォーマット中の特殊文字をエスケープ
         for char in special_chars:
-            escaped = '\\' + char
+            escaped = "\\" + char
             pattern = pattern.replace(char, escaped)
-        
+
         # ファイル名から日付部分を検索
         match = re.search(pattern, filename)
         if not match:
             return None
-            
+
         # マッチした部分から日付文字列を再構成
         date_components = {}
         for key, value in match.groupdict().items():
-            if key in ('Y', 'y', 'm', 'd', 'H', 'I', 'M', 'S'):
+            if key in ("Y", "y", "m", "d", "H", "I", "M", "S"):
                 date_components[key] = value
-        
+
         # 日付文字列を再構成
         date_str = date_format
         for fmt, regex in format_to_pattern.items():
             key = regex[3:4]  # '(?P<Y>...)' から 'Y' を取得
             if key in date_components:
                 date_str = date_str.replace(fmt, date_components[key])
-        
+
         # 日付文字列をdatetimeオブジェクトに変換
         return datetime.strptime(date_str, date_format)
-        
+
     except (ValueError, KeyError) as e:
         return None
 
 
 def is_filename_date_expired(
-    file_path: Path,
-    date_format: str,
-    deadline: Union[datetime, timedelta, int]
+    file_path: Path, date_format: str, deadline: Union[datetime, timedelta, int]
 ) -> bool:
     """
     ファイル名の日付が期限切れかどうかを判定します
