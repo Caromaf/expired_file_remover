@@ -3,7 +3,6 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
-  "remoteUser": "vscode",
   // 👇 Features to add to the Dev Container. More info: https://containers.dev/implementors/features.
   // "features": {},
   // 👇 Use 'forwardPorts' to make a list of ports inside the container available locally.
@@ -11,11 +10,6 @@
   // 👇 Use 'postCreateCommand' to run commands after the container is created.
   // "postCreateCommand": "",
   // 👇 Configure tool-specific properties.
-  // "mounts": [
-  // ホストのSSH設定ファイルをコンテナにマウントする
-  // これにより、コンテナ内でgithub.com-caromafなどのエイリアスが使えるようになります
-  // "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached"
-  // ],
   "customizations": {
     "vscode": {
       "extensions": [
@@ -32,7 +26,6 @@
     "ghcr.io/jungaretti/features/make:1": {},
     "ghcr.io/devcontainers-extra/features/markdownlint-cli2:1": {}
   },
-  // "onCreateCommand": "./.devcontainer/setup.sh"
   // 👇 Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
   // "remoteUser": "root"
 }
