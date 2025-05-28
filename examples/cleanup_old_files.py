@@ -4,7 +4,6 @@ expired-file-removerの使用サンプル
 """
 import argparse
 import sys
-from datetime import datetime, timedelta
 from pathlib import Path
 
 from expired_file_remover import remove_expired_files
