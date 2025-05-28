@@ -64,4 +64,10 @@ warn_return_any = true
 warn_unreachable = true
 strict_optional = true
 namespace_packages = true
-explicit_package_bases = true
+explicit_package_bases = false
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false

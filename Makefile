@@ -42,7 +42,8 @@ format:
 .PHONY: lint
 lint:
 	poetry run flake8 $(SRC_DIR) $(TEST_DIR)
-	poetry run mypy $(SRC_DIR) $(TEST_DIR)
+	PYTHONPATH=src poetry run mypy $(SRC_DIR)
+	PYTHONPATH=. poetry run mypy $(TEST_DIR)
 
 .PHONY: docs
 docs:
