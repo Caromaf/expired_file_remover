@@ -29,7 +29,7 @@ README.md
 
 Dev Container 内でターミナルを開きます。
 
-```bash 
+```bash
 # プロジェクトのルートディレクトリに移動します。
 cd /workspaces/my_project
 
@@ -54,7 +54,7 @@ poetry install
 
 ### ディレクトリ構造
 
-```
+```plain
 プロジェクト/
 ├── pyproject.toml
 ├── src/
@@ -83,4 +83,4 @@ python = "^3.11"
 # その他の依存関係
 ```
 
-この設定によって、Poetry は `src` ディレクトリ内のパッケージを正しく認識できるようになります。 
+この設定によって、Poetry は `src` ディレクトリ内のパッケージを正しく認識できるようになります。

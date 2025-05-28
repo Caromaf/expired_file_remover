@@ -3,6 +3,7 @@
 開発するプロダクトを Docker コンテナに閉じ込めるのではなく、さらに開発する環境そのものを Docker コンテナに閉じ込める機能です。
 
 例えば Python と Django で Web アプリケーションを開発している場合：
+
 - `.devcontainer/`: Pythonのバージョン、Djangoの関連ツール、Gitなどがインストールされた開発環境コンテナを定義します。
 - アプリケーション側の Dockerfileなど: 開発したDjangoアプリケーションを本番環境で動かすために必要なPythonのランタイム、依存ライブラリ、アプリケーションコードなどをコンテナに含めます。
 
@@ -26,8 +27,8 @@ Dev Containerの挙動を定義する最も重要なファイルです。
 - `name`: コンテナの名前
 - `image`: ベースとなるDockerイメージを指定します（例: mcr.microsoft.com/devcontainers/base:ubuntu）。
 - `build`: Dockerfileを使って独自のイメージをビルドする場合に設定します。
-    - `dockerfile`: Dockerfileのパスを指定します（例: `"dockerfile": "Dockerfile"`）。
-    - `context`: ビルドコンテキストのパスを指定します（通常は..でプロジェクトルート）。
+  - `dockerfile`: Dockerfileのパスを指定します（例: `"dockerfile": "Dockerfile"`）。
+  - `context`: ビルドコンテキストのパスを指定します（通常は..でプロジェクトルート）。
 - `dockerComposeFile`: compose.ymlを使用する場合にパスを指定します（例: `"dockerComposeFile": ["../compose.yml"]`）。
 - `service`: compose.ymlで複数のサービスを定義している場合、VS Codeが接続するサービスを指定します。
 - `workspaceFolder`: コンテナ内のワークスペースディレクトリのパス（通常は/workspaces/your-projectなど）。
@@ -48,7 +49,7 @@ Dev Containerの挙動を定義する最も重要なファイルです。
   - ここで「ユーザーデータフォルダーに構成を追加する」を選ぶと、プロジェクトに `.devcontainer/` ディレクトリが作成されず、ユーザーデータフォルダーに設定が保存されます。
 - テンプレートを選択します
   - 例えば「Python 3」を選ぶと、Pythonの開発環境がセットアップされます。
-  - python with poetry を選ぶと、Poetryを使ったPython開発環境がセットアップされます。 
+  - python with poetry を選ぶと、Poetryを使ったPython開発環境がセットアップされます。
 - インストールする追加機能を選択します
   - 必要なVS Code拡張機能を選ぶことができます。
 - Dockerコンテナのビルドと起動が開始されます。初回はイメージのダウンロードや依存関係のインストールに時間がかかります。
