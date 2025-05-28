@@ -3,7 +3,7 @@ name = "expired-file-remover"
 version = "0.1.0"
 description = "特定のディレクトリ内で作成・更新から一定期間を経過したファイルを削除するためのPythonパッケージ"
 authors = [
-    {name = "expired-file-remover 開発者",email = "dev@example.com"}
+    { name = "Caromof", email = "213792648+Caromaf@users.noreply.github.com " },
 ]
 readme = "README.md"
 requires-python = ">=3.11"
@@ -30,7 +30,7 @@ keywords = ["file", "cleanup", "expired", "maintenance", "utility"]
 "Documentation" = "https://your-organization.github.io/expired-file-remover"
 
 [tool.poetry]
-packages = [{include = "expired_file_remover", from = "src"}]
+packages = [{ include = "expired_file_remover", from = "src" }]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
