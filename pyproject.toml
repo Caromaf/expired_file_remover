@@ -3,7 +3,7 @@ name = "expired-file-remover"
 version = "0.1.0"
 description = "特定のディレクトリ内で作成・更新から一定期間を経過したファイルを削除するためのPythonパッケージ"
 authors = [
-    { name = "Caromof", email = "213792648+Caromaf@users.noreply.github.com " },
+    { name = "Caromof", email = "213792648+Caromaf@users.noreply.github.com" },
 ]
 readme = "README.md"
 requires-python = ">=3.11"
