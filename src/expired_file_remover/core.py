@@ -2,10 +2,10 @@
 エクスパイア（有効期限切れ）したファイルを削除するモジュール
 """
 
-import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional, Union
+import re
 
 
 def is_expired(file_path: Path, deadline: Union[datetime, timedelta, int]) -> bool:
@@ -126,67 +126,69 @@ def remove_expired_files(
     return deleted_count
 
 
-def extract_date_from_filename(file_path: Path, date_format: str) -> Optional[datetime]:
+def extract_date_from_filename(file_path: Union[str, Path], date_format: str) -> Optional[datetime]:
     """
     ファイル名から日付を抽出します
 
     Args:
-        file_path: 対象ファイルのパス
+        file_path: 対象ファイルのパス（文字列またはPathオブジェクト）
         date_format: 日付フォーマット（例: '%Y%m%d', '%Y-%m-%d', '%Y%m%d_%H%M%S'）
 
     Returns:
         Optional[datetime]: 抽出された日付。抽出できない場合はNone
+
+    Raises:
+        ValueError: date_formatが無効な場合
     """
+    # 日付フォーマット文字列から正規表現パターンを構築
+    format_to_pattern = {
+        '%Y': r'(\d{4})',      # 年（4桁）
+        '%y': r'(\d{2})',      # 年（2桁）
+        '%m': r'(\d{2})',      # 月（2桁）
+        '%d': r'(\d{2})',      # 日（2桁）
+        '%H': r'(\d{2})',      # 時（24時間制）
+        '%I': r'(\d{2})',      # 時（12時間制）
+        '%M': r'(\d{2})',      # 分
+        '%S': r'(\d{2})',      # 秒
+    }
+
     try:
-        filename = file_path.stem
+        # フォーマット文字列の検証
+        format_str = date_format
+        for fmt in sorted(format_to_pattern.keys(), key=len, reverse=True):
+            format_str = format_str.replace(fmt, '')
 
-        # 日付フォーマット文字列から正規表現パターンを構築
-        format_to_pattern = {
-            "%Y": r"(?P<Y>\d{4})",  # 年（4桁）
-            "%y": r"(?P<y>\d{2})",  # 年（2桁）
-            "%m": r"(?P<m>\d{2})",  # 月（2桁）
-            "%d": r"(?P<d>\d{2})",  # 日（2桁）
-            "%H": r"(?P<H>\d{2})",  # 時（24時間制）
-            "%I": r"(?P<I>\d{2})",  # 時（12時間制）
-            "%M": r"(?P<M>\d{2})",  # 分
-            "%S": r"(?P<S>\d{2})",  # 秒
-        }
+        # 残りの文字が特殊文字かどうかをチェック
+        allowed_chars = set('.-_/: [](){},')
+        for char in format_str:
+            if not (char in allowed_chars or char.isspace()):
+                raise ValueError(f"無効なフォーマット指定子または文字が含まれています: {char}")
 
-        # エスケープが必要な文字
-        special_chars = ".^$*+?{}[]|()"
+        path = Path(file_path) if isinstance(file_path, str) else file_path
+        filename = path.stem
 
         # 正規表現パターンを構築
-        pattern = date_format
-        for fmt, regex in format_to_pattern.items():
-            pattern = pattern.replace(fmt, regex)
-
-        # 日付フォーマット中の特殊文字をエスケープ
-        for char in special_chars:
-            escaped = "\\" + char
-            pattern = pattern.replace(char, escaped)
+        pattern = re.escape(date_format)
+        for fmt in sorted(format_to_pattern.keys(), key=len, reverse=True):
+            pattern = pattern.replace(re.escape(fmt), format_to_pattern[fmt])
 
         # ファイル名から日付部分を検索
         match = re.search(pattern, filename)
         if not match:
             return None
 
-        # マッチした部分から日付文字列を再構成
-        date_components = {}
-        for key, value in match.groupdict().items():
-            if key in ("Y", "y", "m", "d", "H", "I", "M", "S"):
-                date_components[key] = value
+        # マッチした部分をそのままdatetimeに変換
+        matched_str = match.group(0)
+        try:
+            return datetime.strptime(matched_str, date_format)
+        except ValueError:
+            return None
 
-        # 日付文字列を再構成
-        date_str = date_format
-        for fmt, regex in format_to_pattern.items():
-            key = regex[3:4]  # '(?P<Y>...)' から 'Y' を取得
-            if key in date_components:
-                date_str = date_str.replace(fmt, date_components[key])
-
-        # 日付文字列をdatetimeオブジェクトに変換
-        return datetime.strptime(date_str, date_format)
-
-    except (ValueError, KeyError) as e:
+    except ValueError as e:
+        if "無効なフォーマット" in str(e):
+            raise
+        return None
+    except Exception:
         return None
 
 

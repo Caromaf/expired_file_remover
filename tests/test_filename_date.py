@@ -17,19 +17,61 @@ from expired_file_remover.core import (
 class TestExtractDateFromFilename:
     def test_basic_format(self):
         """基本的な日付フォーマットのテスト"""
-        assert extract_date_from_filename("file_20250528.txt", "%Y%m%d") == datetime(2025, 5, 28)
-        assert extract_date_from_filename("file_2025-05-28.txt", "%Y-%m-%d") == datetime(2025, 5, 28)
-        assert extract_date_from_filename("2025_05_28_file.log", "%Y_%m_%d") == datetime(2025, 5, 28)
+        assert extract_date_from_filename(
+            Path("file_20250528.txt"), "%Y%m%d"
+        ) == datetime(2025, 5, 28)
+        assert extract_date_from_filename(
+            Path("file_2025-05-28.txt"), "%Y-%m-%d"
+        ) == datetime(2025, 5, 28)
+        assert extract_date_from_filename(
+            Path("2025_05_28_file.log"), "%Y_%m_%d"
+        ) == datetime(2025, 5, 28)
+
+    def test_time_format(self):
+        """時刻を含む日付フォーマットのテスト"""
+        assert extract_date_from_filename(
+            Path("backup_20250528_235959.tar.gz"), "%Y%m%d_%H%M%S"
+        ) == datetime(2025, 5, 28, 23, 59, 59)
+        assert extract_date_from_filename(
+            Path("log-2025-05-28-23-59.txt"), "%Y-%m-%d-%H-%M"
+        ) == datetime(2025, 5, 28, 23, 59)
+
+    def test_two_digit_year(self):
+        """2桁年のテスト"""
+        assert extract_date_from_filename(
+            Path("file_250528.txt"), "%y%m%d"
+        ) == datetime(2025, 5, 28)
+        assert extract_date_from_filename(
+            Path("file_25-05-28.txt"), "%y-%m-%d"
+        ) == datetime(2025, 5, 28)
+
+    def test_special_chars(self):
+        """特殊文字を含むフォーマットのテスト"""
+        assert extract_date_from_filename(
+            Path("file[20250528].txt"), "[%Y%m%d]"
+        ) == datetime(2025, 5, 28)
+        assert extract_date_from_filename(
+            Path("file(2025.05.28).txt"), "(%Y.%m.%d)"
+        ) == datetime(2025, 5, 28)
 
     def test_no_match(self):
         """日付が含まれないファイル名のテスト"""
-        assert extract_date_from_filename("file.txt", "%Y%m%d") is None
-        assert extract_date_from_filename("nodate_file.log", "%Y-%m-%d") is None
+        assert extract_date_from_filename(Path("file.txt"), "%Y%m%d") is None
+        assert extract_date_from_filename(Path("nodate_file.log"), "%Y-%m-%d") is None
+        # フォーマットと一致しない日付パターン
+        assert extract_date_from_filename(Path("file_2025-05-28.txt"), "%Y%m%d") is None
 
     def test_invalid_date(self):
         """無効な日付のテスト"""
-        assert extract_date_from_filename("file_20252528.txt", "%Y%m%d") is None  # 無効な月
-        assert extract_date_from_filename("file_2025-13-28.txt", "%Y-%m-%d") is None  # 無効な月
+        assert (
+            extract_date_from_filename(Path("file_20252528.txt"), "%Y%m%d") is None
+        )  # 無効な月
+        assert (
+            extract_date_from_filename(Path("file_2025-13-28.txt"), "%Y-%m-%d") is None
+        )  # 無効な月
+        assert (
+            extract_date_from_filename(Path("file_2025-12-32.txt"), "%Y-%m-%d") is None
+        )  # 無効な日
 
     def test_invalid_format(self):
         """無効なフォーマットのテスト"""
@@ -44,46 +86,50 @@ class TestRemoveExpiredFilesByFilenameDate:
         # 有効期限切れファイル
         (tmp_path / "file_20240101.txt").touch()
         (tmp_path / "log_2024-02-15.log").touch()
-        
+
         # 有効期限内ファイル
         (tmp_path / "file_20250601.txt").touch()  # 未来の日付
         (tmp_path / "log_2025-06-15.log").touch()  # 未来の日付
-        
+
         # 日付を含まないファイル
         (tmp_path / "nodate.txt").touch()
-        
+
         # サブディレクトリ
         subdir = tmp_path / "subdir"
         subdir.mkdir()
         (subdir / "file_20240201.txt").touch()
         (subdir / "log_2025-07-01.log").touch()
-        
+
         return tmp_path
 
     def test_remove_by_filename_date_with_datetime(self, setup_test_dir):
         """datetime型のdeadlineでのテスト"""
         test_dir = setup_test_dir
         deadline = datetime(2025, 1, 1)  # 2025年1月1日より前の日付を持つファイルを削除
-        
+
         # 削除実行
         deleted = remove_expired_files_by_filename_date(test_dir, "%Y%m%d", deadline)
         assert deleted == 1  # ルートディレクトリの1ファイルのみ削除
-        
+
         # ファイルの存在確認
         assert not (test_dir / "file_20240101.txt").exists()  # 削除済み
         assert (test_dir / "file_20250601.txt").exists()  # 残存
         assert (test_dir / "nodate.txt").exists()  # 日付無しファイルは残存
-        assert (test_dir / "subdir" / "file_20240201.txt").exists()  # サブディレクトリは処理されず
+        assert (
+            test_dir / "subdir" / "file_20240201.txt"
+        ).exists()  # サブディレクトリは処理されず
 
     def test_remove_by_filename_date_with_recursive(self, setup_test_dir):
         """再帰的に検索するテスト"""
         test_dir = setup_test_dir
         deadline = datetime(2025, 1, 1)
-        
+
         # 再帰的に削除実行
-        deleted = remove_expired_files_by_filename_date(test_dir, "%Y%m%d", deadline, recursive=True)
+        deleted = remove_expired_files_by_filename_date(
+            test_dir, "%Y%m%d", deadline, recursive=True
+        )
         assert deleted == 2  # ルートとサブディレクトリの合計2ファイルを削除
-        
+
         # ファイルの存在確認
         assert not (test_dir / "file_20240101.txt").exists()
         assert not (test_dir / "subdir" / "file_20240201.txt").exists()
@@ -93,13 +139,13 @@ class TestRemoveExpiredFilesByFilenameDate:
         """ファイルフィルターのテスト"""
         test_dir = setup_test_dir
         deadline = datetime(2025, 1, 1)
-        
+
         # .logファイルのみを対象に削除実行
         deleted = remove_expired_files_by_filename_date(
             test_dir, "%Y-%m-%d", deadline, file_filter=[".log"]
         )
         assert deleted == 1
-        
+
         # .txtファイルは残っているはず
         assert (test_dir / "file_20240101.txt").exists()
         assert not (test_dir / "log_2024-02-15.log").exists()
@@ -109,7 +155,7 @@ class TestRemoveExpiredFilesByFilenameDate:
         test_dir = setup_test_dir
         # 現在から1年前より古いファイルを削除
         deadline = timedelta(days=365)
-        
+
         # 削除実行
         deleted = remove_expired_files_by_filename_date(test_dir, "%Y%m%d", deadline)
         assert deleted == 1  # 2024年1月1日のファイルのみ削除
@@ -119,7 +165,7 @@ class TestRemoveExpiredFilesByFilenameDate:
         test_dir = setup_test_dir
         # 現在から400日前より古いファイルを削除
         deadline = 400
-        
+
         # 削除実行
         deleted = remove_expired_files_by_filename_date(test_dir, "%Y%m%d", deadline)
         assert deleted == 1  # 2024年1月1日のファイルのみ削除
