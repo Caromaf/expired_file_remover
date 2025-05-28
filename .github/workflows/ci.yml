@@ -1,0 +1,71 @@
+name: Python CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.7.1
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+    
+    - name: Install dependencies
+      run: |
+        poetry install --no-interaction --with dev
+    
+    - name: Format check with isort
+      run: |
+        poetry run isort --check-only src tests
+    
+    - name: Lint with flake8
+      run: |
+        poetry run flake8 src tests
+    
+    - name: Type check with mypy
+      run: |
+        poetry run mypy src/expired_file_remover tests
+    
+    - name: Test with pytest
+      run: |
+        poetry run pytest --cov=src/expired_file_remover
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+    
+    - name: Setup Docusaurus
+      run: |
+        mkdir -p website
+        cd website
+        npx create-docusaurus@latest . classic --typescript
+        
+        # 既存のドキュメントをコピー
+        mkdir -p docs/guides
+        cp ../docs/*.md docs/guides/
+    
+    - name: Build documentation
+      run: |
+        cd website && npm install && npm run build
