@@ -18,6 +18,8 @@ help:
 	@echo "  make format            コードをフォーマットする（isort, black）"
 	@echo "  make lint              コードをチェックする（flake8, mypy）"
 	@echo "  make docs              ドキュメントをビルドする"
+	@echo "  make docs-dev          ドキュメントの開発サーバーを起動する"
+	@echo "  make docs-serve        ビルドしたドキュメントを配信する"
 	@echo "  make clean             生成されたファイルをクリーンアップする"
 	@echo "  make build             パッケージをビルドする"
 	@echo "  make all               すべてのチェックとテストを行う"
@@ -32,7 +34,17 @@ test:
 
 .PHONY: coverage
 coverage:
-	poetry run pytest --cov=$(SRC_DIR) --cov-report=html
+	poetry run pytest --cov=expired_file_remover --cov-report=html
+	@echo "カバレッジレポートが htmlcov/index.html に生成されました"
+	@if command -v code >/dev/null 2>&1; then \
+		echo "VSCodeでレポートを開いています..."; \
+		code -r htmlcov/index.html; \
+	elif [ -n "$(BROWSER)" ]; then \
+		echo "ブラウザでレポートを開いています..."; \
+		$(BROWSER) htmlcov/index.html; \
+	else \
+		echo "レポートを確認するには htmlcov/index.html をブラウザで開いてください"; \
+	fi
 
 .PHONY: format
 format:
