@@ -44,6 +44,7 @@ include-package-data = true
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
+pytest-cov = "^6.1.1"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.15.0"
