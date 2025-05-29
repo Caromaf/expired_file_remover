@@ -5,9 +5,9 @@
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
-from unittest.mock import patch
 
 from expired_file_remover.core import (
     extract_date_from_filename,
@@ -82,21 +82,31 @@ class TestExtractDateFromFilename:
     def test_format_validation_exception(self):
         """無効な日付フォーマット指定子の例外テスト"""
         with pytest.raises(ValueError) as e:
-            extract_date_from_filename(Path("file.txt"), "%Z")  # 無効なフォーマット指定子
+            extract_date_from_filename(
+                Path("file.txt"), "%Z"
+            )  # 無効なフォーマット指定子
         assert "有効な日付フォーマット指定子" in str(e.value)
 
     def test_extract_date_with_invalid_day(self):
         """日付妥当性チェックで月と日が不一致となるケースのテスト (226行目のカバレッジ)"""
         # monthのみ不一致のケース（月は02だが日付変換後は03になる）
-        mock_match = type("obj", (object,), {
-            "groupdict": lambda self: {"year4": "2025", "month": "02", "day": "31"},
-            "group": lambda self, name: {"year4": "2025", "month": "02", "day": "31"}.get(name, "01")
-        })()
-        
+        mock_match = type(
+            "obj",
+            (object,),
+            {
+                "groupdict": lambda self: {"year4": "2025", "month": "02", "day": "31"},
+                "group": lambda self, name: {
+                    "year4": "2025",
+                    "month": "02",
+                    "day": "31",
+                }.get(name, "01"),
+            },
+        )()
+
         with pytest.raises(ValueError):
             # まず通常の変換で2月31日が3月3日になることを確認
-            datetime.strptime("20250231", "%Y%m%d")  
-            
+            datetime.strptime("20250231", "%Y%m%d")
+
         # extract_date_from_filenameでは日付の妥当性チェックでNoneが返る
         with patch("re.search", return_value=mock_match):
             assert extract_date_from_filename("file_20250231.txt", "%Y%m%d") is None
@@ -106,7 +116,7 @@ class TestExtractDateFromFilename:
         # 4月31日など、月と日の不一致（存在しない日付）をテスト
         # ファイル名で直接テスト
         filename = "file_20250431.txt"
-        
+
         try:
             # まず通常の変換で4月31日が5月1日になることを確認
             dt = datetime.strptime("20250431", "%Y%m%d")
@@ -114,23 +124,31 @@ class TestExtractDateFromFilename:
         except ValueError:
             # 環境によっては直接例外になるかもしれないのでパス
             pass
-            
+
         # mock_matchを使ったテスト
-        mock_match = type("obj", (object,), {
-            "groupdict": lambda self: {"year4": "2025", "month": "04", "day": "31"},
-            "group": lambda self, name: {"year4": "2025", "month": "04", "day": "31"}.get(name, "01")
-        })()
-        
+        mock_match = type(
+            "obj",
+            (object,),
+            {
+                "groupdict": lambda self: {"year4": "2025", "month": "04", "day": "31"},
+                "group": lambda self, name: {
+                    "year4": "2025",
+                    "month": "04",
+                    "day": "31",
+                }.get(name, "01"),
+            },
+        )()
+
         with patch("re.search", return_value=mock_match):
             # extract_date_from_filenameはNoneを返す（日付妥当性チェックに失敗）
             assert extract_date_from_filename(filename, "%Y%m%d") is None
-            
+
         # 実際のファイル名で試す
         with patch.object(re, "search", wraps=re.search) as mock_search:
             result = extract_date_from_filename("file_20250431.txt", "%Y%m%d")
             assert result is None, "有効でない日付なのでNoneを返すべき"
             assert mock_search.called
-            
+
     def test_invalid_date_format_specifier_direct(self):
         """無効な日付フォーマット指定子の例外ケース (234行目のカバレッジ)"""
         # コードを直接実行して動作確認
